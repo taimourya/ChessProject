@@ -107,7 +107,6 @@ void Chess::afficher()
             }
             else
             {
-                SetConsoleTextAttribute(hConsole, 15);
                 if(terrain[i][j].couleurOfPiece() == BLACK)
                     SetConsoleTextAttribute(hConsole, 12);
                 cout << " " << terrain[i][j].getCharType();
