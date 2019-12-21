@@ -12,6 +12,8 @@ Chess::Chess()
     scoreWhite = 0;
     scoreBlack = 0;
 
+    ///initialisation des cases
+
     terrain[0][0].setCase("A8", TOUR, BLACK, 5);
     terrain[0][1].setCase("B8", CHEVAL, BLACK, 3);
     terrain[0][2].setCase("C8", FOU, BLACK, 3);
@@ -43,7 +45,7 @@ Chess::Chess()
     }
 
 
-    terrain[4][4].setCase("E1", CHEVAL, BLACK, 0);
+    //terrain[4][4].setCase("E1", CHEVAL, BLACK, 0);
 
     terrain[7][0].setCase("A1", TOUR, WHITE, 5);
     terrain[7][1].setCase("B1", CHEVAL, WHITE, 3);
