@@ -1,16 +1,15 @@
+#include <SFML/Graphics.hpp>
 #include <iostream>
-#include "Chess.h"
+#include "GraphiqueChess.h"
 
-using chess::Chess;
+using namespace sf;
+using namespace std;
+using chess::GraphiqueChess;
+
 
 int main()
 {
-
-    Chess game;
-
-    game.play();
-
-
-
+    GraphiqueChess chess;
+    chess.draw();
     return 0;
 }

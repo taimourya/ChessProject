@@ -74,7 +74,7 @@ bool Case::isEnnemy(const Case& c) const
 {
     if(isFree() || c.isFree())
         return false;
-    if(p->getCouleur() != c.p->getCouleur())
+    if(couleurOfPiece() != c.couleurOfPiece())
         return true;
     return false;
 }
@@ -89,24 +89,50 @@ bool Case::deplacer(Case& c)
     p = 0;
     return true;
 }
+bool Case::switchTmp(Case& c, Case& tmp)
+{
+    if(isSame(c))
+        return false;
+
+    tmp.p = c.p;
+
+    c.p = p;
+    p = 0;
+    return true;
+}
+bool Case::retourTmp(Case& c, Case& tmp)
+{
+    if(isSame(c))
+        return false;
+
+    c.p = p;
+    p = tmp.p;
+    tmp.p = 0;
+    return true;
+}
 
 char Case::getCharType() const
 {
-    char c = (p->getType())[0];
+    if(isFree())
+        return 'e';
+    string type = p->getType();
+    char c = type[0];
     if(c>='a' && c>='z')
         c-=32;
     return c; ///-32 pour maj
 }
 string Case::getType() const
 {
+    if(isFree())
+        return "erreur";
     return p->getType();
 }
 int Case::getPoint() const
 {
+    if(isFree())
+        return 0;
     return p->getPoint();
 }
-
-
 
 
 

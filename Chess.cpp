@@ -44,8 +44,7 @@ Chess::Chess()
         nomCase[1]--;
     }
 
-
-    //terrain[4][4].setCase("E1", CHEVAL, BLACK, 0);
+    //terrain[3][4].setCase("E7", PION, BLACK, 1);
 
     terrain[7][0].setCase("A1", TOUR, WHITE, 5);
     terrain[7][1].setCase("B1", CHEVAL, WHITE, 3);
@@ -121,22 +120,35 @@ void Chess::afficher()
 }
 void Chess::play()
 {
-    /*while(true)
-    {
-        system("cls");
-        afficher();
-        mouve();
-    }*/
+    int txKing[100], tyKing[100], nKing=0;
+    bool fin = false;
+    bool isCheck = false;
 
-    while(true) ///condition checkMate fin de la partie.
+    ///condition checkMate fin de la partie.
+    while(!fin)
     {
 
         system("cls");
         afficher();
+        if(isCheck)
+            cout << "Check" << endl;
         if(mouve())
+        {
             tour = tour == WHITE? BLACK:WHITE;
+            fin = checkMate(txKing, tyKing, nKing, isCheck);
+        }
     }
+
+    system("cls");
+    afficher();
+
+    //tour change avant de quitter la boucle
+    string winner = tour==WHITE? "Red": "White";
+    cout << "check Mate winner is " << winner << endl;
 }
+
+
+///choix mouvement
 void Chess::choixMouve(int& x1, int& y1, int& x2, int& y2)
 {
     char choix[20];
@@ -174,27 +186,23 @@ void Chess::choixMouve(int& x1, int& y1, int& x2, int& y2)
     x2 = N-(choix[7]-'0');
 
 }
+
+///valider mouvement des pieces
 bool Chess::mouve()
 {
     int x1, y1, x2, y2;
     ///x ligne
     ///y colonne
-
+    int xKing, yKing;
     int txEnnemy[100], tyEnnemy[100], nEnnemy=0;
-    int i;
-
-
-    mouveEnnemyPossible(txEnnemy, tyEnnemy, nEnnemy);
-    /*for(i=0; i<nEnnemy; i++)
-    {
-        cout << "x : " << txEnnemy[i] << " | y : " << tyEnnemy[i] << endl;
-    }
-    cout << endl;*/
+    Case tmp;
 
     do
     {
         choixMouve(x1, y1, x2, y2);
     }while((x1<0 && x1>=8) || (x2<0 && x2>=8) || (y1<0 && y1>=8) || (y2<0 && y2>=8));
+
+
 
     if(terrain[x1][y1].isFree())/// si on a sélectioner une case vide on quite
         return false;
@@ -236,6 +244,20 @@ bool Chess::mouve()
             return false;
     }
 
+    ///verifier si se mouvement ne mettra pas le roi en danger (check mate)
+    terrain[x1][y1].switchTmp(terrain[x2][y2], tmp);
+
+    chercherKing(xKing, yKing);
+    mouveEnnemyPossible(txEnnemy, tyEnnemy, nEnnemy);
+    ///si c'est le cas on quitte (false)
+    if(isKingCheck(xKing, yKing, txEnnemy, tyEnnemy, nEnnemy))
+    {
+        terrain[x2][y2].retourTmp(terrain[x1][y1], tmp);
+        return false;
+    }
+    terrain[x2][y2].retourTmp(terrain[x1][y1], tmp);
+
+
     ///si la case arriver est un ennemi on modifie le scors celon la piéce mangé
     if(terrain[x1][y1].isEnnemy(terrain[x2][y2]))
     {
@@ -247,6 +269,7 @@ bool Chess::mouve()
 
     ///si on arive jusqu'a la cela veut dire qu'on peut faire bouger la piéce
     terrain[x1][y1].deplacer(terrain[x2][y2]);
+
     return true;
 }
 
@@ -345,76 +368,81 @@ bool Chess::mouveFou(int x1, int y1, int x2, int y2)
 {
     int i, j;
     bool trouve = false;
+    bool obstacle = false;
 
-    for(i=x1-1, j=y1-1; i>= 0 && j>=0 && !trouve; i--, j--)
+    for(i=x1-1, j=y1-1; i>= 0 && j>=0 && !trouve; i--, j--) ///diag-
     {
         if(x2 == i && y2 == j)
             trouve = true;
+        else
+        {
+            if(!terrain[i][j].isFree())
+                obstacle = true;
+        }
     }
 
     if(trouve)
     {
         ///verification obstacle
-        for(i=x1-1, j=y1-1; i>x2 && j>y2; i--, j--)
-        {
-            if(!terrain[i][j].isFree())
-                return false;
-
-        }
+        if(obstacle)
+            return false;
     }
     else
     {
         trouve = false;
-        for(i=x1+1, j=y1+1; i<N && j<N && !trouve; i++, j++)
+        obstacle = false;
+        for(i=x1+1, j=y1+1; i<N && j<N && !trouve; i++, j++) ///diag+
         {
             if(x2 == i && y2 == j)
                 trouve = true;
+            else
+            {
+                if(!terrain[i][j].isFree())
+                    obstacle = true;
+            }
         }
         if(trouve)
         {
             ///verification obstacle
-            for(i=x1+1, j=y1+1; i<x2 && j<y2; i++, j++)
-            {
-                if(!terrain[i][j].isFree())
-                    return false;
-
-            }
+            if(obstacle)
+                return false;
         }
         else
         {
             trouve = false;
-            for(i=x1-1, j=y1+1; i>=0 && j<N && !trouve; i--, j++)
+            obstacle = false;
+            for(i=x1-1, j=y1+1; i>=0 && j<N && !trouve; i--, j++) ///anti diag-
             {
                 if(x2 == i && y2 == j)
                     trouve = true;
+                else
+                {
+                    if(!terrain[i][j].isFree())
+                        obstacle = true;
+                }
             }
             if(trouve)
             {
-                ///verification obstacle
-                for(i=x1-1, j=y1+1; i>x2 && j<y2; i--, j++)
-                {
-                    if(!terrain[i][j].isFree())
-                        return false;
-
-                }
+                if(obstacle)
+                    return false;
             }
             else
             {
                 trouve = false;
-                for(i=x1+1, j=y1-1; i<N && j>=0 && !trouve; i++, j--)
+                for(i=x1+1, j=y1-1; i<N && j>=0 && !trouve; i++, j--)///anti diag +
                 {
                     if(x2 == i && y2 == j)
                         trouve = true;
+                    else
+                    {
+                        if(!terrain[i][j].isFree())
+                            obstacle = true;
+                    }
                 }
                 if(trouve)
                 {
-                    ///verification obstacle
-                    for(i=x1+1, j=y1-1; i<x2 && j>y2; i++, j--)
-                    {
-                        if(!terrain[i][j].isFree())
-                            return false;
-
-                    }
+                    if(obstacle)
+                        return false;
                 }
                 else
                 {
@@ -447,11 +475,310 @@ bool Chess::mouveKing(int x1, int y1, int x2, int y2)
     return true;
 }
 
+
+
+///traitement check et check mate
+void Chess::chercherKing(int& x, int& y)
+{
+    ///chercher la position du roi du tour actuelle
+    for(x=0; x<N; x++)
+    {
+        for(y=0; y<N; y++)
+        {
+            if(!terrain[x][y].isFree())
+            {
+                if(terrain[x][y].getType() == ROI && terrain[x][y].couleurOfPiece() == tour)
+                {
+                    return;
+                }
+            }
+        }
+    }
+}
+
+bool Chess::isKingCheck(int x, int y, int* txEnnemy, int *tyEnnemy, int nEnnemy)
+{
+    int i;
+    ///verifie si le roi est en etat check par rapport au case domminer par l'ennemi
+    for(i=0; i<nEnnemy; i++)
+    {
+        if(x==txEnnemy[i] && y==tyEnnemy[i])
+        {
+            return true;
+        }
+    }
+    return false;
+}
+bool Chess::checkMate(int* txKing, int* tyKing, int &nKing, bool &isCheck)
+{
+    ///si aucun mouvement possible et le roi ne peut pas bouger cela veut dire que c'est la fin de la parti check mate return false
+    int x, y;
+    int cpt = 0;
+    int txEnnemy[100], tyEnnemy[100], nEnnemy=0;
+    Case tmp;
+
+    isCheck = false;
+    nKing = 0;
+    chercherKing(x, y);
+
+    ///cpt compteur sur le nombre de position check sur le roi Max 9
+
+    ///check sur la place du roi
+    mouveEnnemyPossible(txEnnemy, tyEnnemy, nEnnemy);
+    if(isKingCheck(x, y, txEnnemy, tyEnnemy, nEnnemy))
+    {
+        ///si le roi est check sur ca place cpt++
+        isCheck = true;
+        cpt++;
+    }
+
+    ///verification sur la porter du roi
+    if(x+1<N)
+    {
+        if(!terrain[x][y].isSame(terrain[x+1][y]))
+        {
+            terrain[x][y].switchTmp(terrain[x+1][y], tmp);
+            mouveEnnemyPossible(txEnnemy, tyEnnemy, nEnnemy);
+            if(isKingCheck(x+1, y, txEnnemy, tyEnnemy, nEnnemy))
+                cpt++;
+            else
+            {
+                txKing[nKing] = x+1;
+                tyKing[nKing] = y;
+                nKing++;
+            }
+            terrain[x+1][y].retourTmp(terrain[x][y], tmp);
+        }
+        else
+            cpt++;
+    }
+    else
+        cpt++;
+    if(x-1>=0)
+    {
+        if(!terrain[x][y].isSame(terrain[x-1][y]))
+        {
+            terrain[x][y].switchTmp(terrain[x-1][y], tmp);
+            mouveEnnemyPossible(txEnnemy, tyEnnemy, nEnnemy);
+            if(isKingCheck(x-1, y, txEnnemy, tyEnnemy, nEnnemy))
+                cpt++;
+            else
+            {
+                txKing[nKing] = x-1;
+                tyKing[nKing] = y;
+                nKing++;
+            }
+            terrain[x-1][y].retourTmp(terrain[x][y], tmp);
+        }
+        else
+            cpt++;
+    }
+    else
+        cpt++;
+    if(y+1<N)
+    {
+        if(!terrain[x][y].isSame(terrain[x][y+1]))
+        {
+            terrain[x][y].switchTmp(terrain[x][y+1], tmp);
+            mouveEnnemyPossible(txEnnemy, tyEnnemy, nEnnemy);
+            if(isKingCheck(x, y+1, txEnnemy, tyEnnemy, nEnnemy))
+                cpt++;
+            else
+            {
+                txKing[nKing] = x;
+                tyKing[nKing] = y+1;
+                nKing++;
+            }
+            terrain[x][y+1].retourTmp(terrain[x][y], tmp);
+        }
+        else
+            cpt++;
+    }
+    else
+        cpt++;
+    if(y-1>=0)
+    {
+        if(!terrain[x][y].isSame(terrain[x][y-1]))
+        {
+            terrain[x][y].switchTmp(terrain[x][y-1], tmp);
+            mouveEnnemyPossible(txEnnemy, tyEnnemy, nEnnemy);
+            if(isKingCheck(x, y-1, txEnnemy, tyEnnemy, nEnnemy))
+                cpt++;
+            else
+            {
+                txKing[nKing] = x;
+                tyKing[nKing] = y-1;
+                nKing++;
+            }
+            terrain[x][y-1].retourTmp(terrain[x][y], tmp);
+        }
+        else
+            cpt++;
+    }
+    else
+        cpt++;
+    if(x+1<N && y+1<N)
+    {
+        if(!terrain[x][y].isSame(terrain[x+1][y+1]))
+        {
+            terrain[x][y].switchTmp(terrain[x+1][y+1], tmp);
+            mouveEnnemyPossible(txEnnemy, tyEnnemy, nEnnemy);
+            if(isKingCheck(x+1, y+1, txEnnemy, tyEnnemy, nEnnemy))
+                cpt++;
+            else
+            {
+                txKing[nKing] = x+1;
+                tyKing[nKing] = y+1;
+                nKing++;
+            }
+            terrain[x+1][y+1].retourTmp(terrain[x][y], tmp);
+        }
+        else
+            cpt++;
+    }
+    else
+        cpt++;
+    if(x-1>=0 && y+1<N)
+    {
+        if(!terrain[x][y].isSame(terrain[x-1][y+1]))
+        {
+            terrain[x][y].switchTmp(terrain[x-1][y+1], tmp);
+            mouveEnnemyPossible(txEnnemy, tyEnnemy, nEnnemy);
+            if(isKingCheck(x-1, y+1, txEnnemy, tyEnnemy, nEnnemy))
+                cpt++;
+            else
+            {
+                txKing[nKing] = x-1;
+                tyKing[nKing] = y+1;
+                nKing++;
+            }
+            terrain[x-1][y+1].retourTmp(terrain[x][y], tmp);
+        }
+        else
+            cpt++;
+    }
+    else
+        cpt++;
+    if(x+1<N && y-1>=0)
+    {
+        if(!terrain[x][y].isSame(terrain[x+1][y-1]))
+        {
+            terrain[x][y].switchTmp(terrain[x+1][y-1], tmp);
+            mouveEnnemyPossible(txEnnemy, tyEnnemy, nEnnemy);
+            if(isKingCheck(x+1, y-1, txEnnemy, tyEnnemy, nEnnemy))
+                cpt++;
+            else
+            {
+                txKing[nKing] = x+1;
+                tyKing[nKing] = y-1;
+                nKing++;
+            }
+            terrain[x+1][y-1].retourTmp(terrain[x][y], tmp);
+        }
+        else
+            cpt++;
+    }
+    else
+        cpt++;
+    if(x-1>=0 && y-1>=0)
+    {
+        if(!terrain[x][y].isSame(terrain[x-1][y-1]))
+        {
+            terrain[x][y].switchTmp(terrain[x-1][y-1], tmp);
+            mouveEnnemyPossible(txEnnemy, tyEnnemy, nEnnemy);
+            if(isKingCheck(x-1, y-1, txEnnemy, tyEnnemy, nEnnemy))
+                cpt++;
+            else
+            {
+                txKing[nKing] = x-1;
+                tyKing[nKing] = y-1;
+                nKing++;
+            }
+            terrain[x-1][y-1].retourTmp(terrain[x][y], tmp);
+        }
+        else
+            cpt++;
+    }
+    else
+        cpt++;
+
+
+    /*cout << "cpt : " << cpt << endl;
+    system("pause");*/
+    ///si cpt == 9 veut dire que tout les mouvements du roi sont controler par l'ennemie
+    if(cpt==9)
+    {
+        ///reste a voir si une autre piece peut se sacrifier pour sauver le roi
+        if(!isMouveSaveKing(x, y))
+        {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+
+bool Chess::isMouveSaveKing(int xKing, int yKing)
+{
+    ///verifie si une piéce peut se sacrifier
+    int i, j, k;
+    int txPosb[100], tyPosb[100], nPosb=0;
+    int txEnnemy[100], tyEnnemy[100], nEnnemy=0;
+    Case tmp;
+
+
+    for(i=0; i<N; i++)
+    {
+        for(j=0; j<N; j++)
+        {
+            ///si la case n'est pas vide
+            if(!terrain[i][j].isFree())
+            {
+                ///si se n'est pas le roi
+                if(xKing != i || yKing != j)
+                {
+                    ///si c'est une piece du joueur tour
+                    if(terrain[i][j].couleurOfPiece() == tour)
+                    {
+                        nPosb = 0;
+                        ///calcule des mouvement possible de la piece actuelle
+                        calculMouveOfPiece(i, j, txPosb, tyPosb, nPosb);
+
+                        ///parcours des mouvement possible de la piece actuelle
+                        for(k=0; k<nPosb; k++)
+                        {
+                            ///simulation des mouvement possible et verifierr si on a trouver un mouvement qui va sauver le roi
+                            terrain[i][j].switchTmp(terrain[txPosb[k]][tyPosb[k]], tmp);
+                            mouveEnnemyPossible(txEnnemy, tyEnnemy, nEnnemy);
+                            ///si se mouvement peut sauver le roi
+                            if(!isKingCheck(xKing, yKing, txEnnemy, tyEnnemy, nEnnemy))
+                            {
+                                ///on quitte avec return true (on peut sauver le roi)
+                                terrain[txPosb[k]][tyPosb[k]].retourTmp(terrain[i][j], tmp);
+                                return true;
+                            }
+                            terrain[txPosb[k]][tyPosb[k]].retourTmp(terrain[i][j], tmp);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    ///si on arrive jusqu'au la c'est que aucun mouvement ne peut sauver le roi
+    return false;
+}
+
+
+///calcule des cas possible de l'ennemi
 void Chess::mouveEnnemyPossible(int* tx, int* ty, int &nb)
 {
     int i, j;
 
     int couleurEnnemy = tour == WHITE? BLACK: WHITE;
+
+    nb = 0;
 
     for(i=0; i<N; i++)
     {
@@ -468,6 +795,8 @@ void Chess::mouveEnnemyPossible(int* tx, int* ty, int &nb)
     }
 }
 
+
+///calcule des cas possible
 void Chess::calculMouveOfPiece(int x, int y, int *tx, int *ty, int &nb)
 {
     if(terrain[x][y].getType() == PION)
@@ -476,13 +805,12 @@ void Chess::calculMouveOfPiece(int x, int y, int *tx, int *ty, int &nb)
         calculMouveOfCheval(x, y, tx, ty, nb);
     else if(terrain[x][y].getType() == ROI)
         calculMouveOfKing(x, y, tx, ty, nb);
-    ///pas encore créer
-   /* if(terrain[x][y].getType() == TOUR)
-        calculMouveOfTour(x, y, tx, ty, nb);*/
-    /*else if(terrain[x][y].getType() == FOU)
-        calculMouveOfFou(x, y, tx, ty);
+    else if(terrain[x][y].getType() == TOUR)
+        calculMouveOfTour(x, y, tx, ty, nb);
+    else if(terrain[x][y].getType() == FOU)
+        calculMouveOfFou(x, y, tx, ty, nb);
     else if(terrain[x][y].getType() == REINNE)
-        calculMouveOfQueen(x, y, tx, ty);*/
+        calculMouveOfQueen(x, y, tx, ty, nb);
 }
 void Chess::calculMouveOfPion(int x, int y, int* tx, int* ty, int &nb)
 {
@@ -584,8 +912,6 @@ void Chess::calculMouveOfCheval(int x, int y, int* tx, int* ty, int &nb)
 }
 
 
-
-
 void Chess::calculMouveOfKing(int x, int y, int* tx, int* ty, int& nb)
 {
     if(x+1<N)
@@ -661,44 +987,182 @@ void Chess::calculMouveOfKing(int x, int y, int* tx, int* ty, int& nb)
         }
     }
 }
+void Chess::calculMouveOfTour(int x, int y, int* tx, int* ty, int& nb)
+{
+    int i;
+    int free = true;
 
+    for(i=x+1; i<N && free; i++)///ligne +
+    {
+        if(!terrain[i][y].isFree())
+        {
+            if(!terrain[i][y].isSame(terrain[x][y]))
+            {
+                tx[nb] = i;
+                ty[nb] = y;
+                nb++;
+            }
+            free = false;
+        }
+        else
+        {
+            tx[nb] = i;
+            ty[nb] = y;
+            nb++;
+        }
+    }
+    free=true;
+    for(i=x-1; i>=0 && free; i--)///ligne -
+    {
+        if(!terrain[i][y].isFree())
+        {
+            if(!terrain[i][y].isSame(terrain[x][y]))
+            {
+                tx[nb] = i;
+                ty[nb] = y;
+                nb++;
+            }
+            free = false;
+        }
+        else
+        {
+            tx[nb] = i;
+            ty[nb] = y;
+            nb++;
+        }
+    }
+    free=true;
+    for(i=y+1; i<N && free; i++)///colonne +
+    {
+        if(!terrain[x][i].isFree())
+        {
+            if(!terrain[x][i].isSame(terrain[x][y]))
+            {
+                tx[nb] = x;
+                ty[nb] = i;
+                nb++;
+            }
+            free = false;
+        }
+        else
+        {
+            tx[nb] = x;
+            ty[nb] = i;
+            nb++;
+        }
+    }
+    free=true;
+    for(i=y-1; i>=0 && free; i--)///colonne -
+    {
+        if(!terrain[x][i].isFree())
+        {
+            if(!terrain[x][i].isSame(terrain[x][y]))
+            {
+                tx[nb] = x;
+                ty[nb] = i;
+                nb++;
+            }
+            free = false;
+        }
+        else
+        {
+            tx[nb] = x;
+            ty[nb] = i;
+            nb++;
+        }
+    }
+}
+void Chess::calculMouveOfFou(int x, int y, int* tx, int* ty, int& nb)
+{
+    int i, j;
+    int free = true;
 
+    for(i=x+1, j=y+1; i<N && j<N && free; i++, j++) ///diag +
+    {
+        if(!terrain[i][j].isFree())
+        {
+            if(!terrain[i][j].isSame(terrain[x][y]))
+            {
+                tx[nb] = i;
+                ty[nb] = j;
+                nb++;
+            }
+            free = false;
+        }
+        else
+        {
+            tx[nb] = i;
+            ty[nb] = j;
+            nb++;
+        }
+    }
+    free = true;
+    for(i=x-1, j=y-1; i>=0 && j>=0 && free; i--, j--) /// diag -
+    {
+        if(!terrain[i][j].isFree())
+        {
+            if(!terrain[i][j].isSame(terrain[x][y]))
+            {
+                tx[nb] = i;
+                ty[nb] = j;
+                nb++;
+            }
+            free = false;
+        }
+        else
+        {
+            tx[nb] = i;
+            ty[nb] = j;
+            nb++;
+        }
+    }
+    free = true;
+    for(i=x+1, j=y-1; i<N && j>=0 && free; i++, j--) /// anti diag +
+    {
+        if(!terrain[i][j].isFree())
+        {
+            if(!terrain[i][j].isSame(terrain[x][y]))
+            {
+                tx[nb] = i;
+                ty[nb] = j;
+                nb++;
+            }
+            free = false;
+        }
+        else
+        {
+            tx[nb] = i;
+            ty[nb] = j;
+            nb++;
+        }
+    }
+    free = true;
+    for(i=x-1, j=y+1; i>=0 && j<N && free; i--, j++) /// anti diag -
+    {
+        if(!terrain[i][j].isFree())
+        {
+            if(!terrain[i][j].isSame(terrain[x][y]))
+            {
+                tx[nb] = i;
+                ty[nb] = j;
+                nb++;
+            }
+            free = false;
+        }
+        else
+        {
+            tx[nb] = i;
+            ty[nb] = j;
+            nb++;
+        }
+    }
+}
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+void Chess::calculMouveOfQueen(int x, int y, int* tx, int* ty, int& nb)
+{
+    calculMouveOfTour(x, y, tx, ty, nb);
+    calculMouveOfFou(x, y, tx, ty, nb);
+}
 
 
 
