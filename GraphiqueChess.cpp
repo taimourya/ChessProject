@@ -10,6 +10,7 @@ GraphiqueChess::GraphiqueChess() : Chess()
     {
         cout << "erreur ouverture police arial" << endl;
     }
+
     createBoard();
 
     createPiece(pionSprite, pionTexture, "pieces/pion.png");
@@ -19,7 +20,7 @@ GraphiqueChess::GraphiqueChess() : Chess()
     createPiece(queenSprite, queenTexture, "pieces/queen.png");
     createPiece(kingSprite, kingTexture, "pieces/king.png");
 }
-void GraphiqueChess::draw()
+void GraphiqueChess::play()
 {
     pionSprite.setPosition(Vector2f(32, 32));
     pionSprite.setColor(Color::Black);
@@ -61,7 +62,7 @@ void GraphiqueChess::draw()
                 {
                     if(mouve(x1, y1, x2, y2))
                     {
-                        cout << "to (" << x2 << "," << y2 << ") " << endl;
+                        cout << " to (" << x2 << "," << y2 << ") " << endl;
                         tour = tour == WHITE? BLACK:WHITE;
                         fin = checkMate(txKing, tyKing, nKing, isCheck);
                     }
@@ -207,11 +208,11 @@ bool GraphiqueChess::mouve(int x1, int y1, int x2, int y2)
     Case tmp;
 
 
-    if(terrain[x1][y1].isFree())/// si on a sélectioner une case vide on quite
+    if(terrain[x1][y1].isFree())/// si on a sélectioner une case vide on quitte
         return false;
-    if(terrain[x1][y1].couleurOfPiece() != tour) /// si on a sélectioner une piéce de l'ennemi on quite
+    if(terrain[x1][y1].couleurOfPiece() != tour) /// si on a sélectioner une piéce de l'ennemi on quitte
         return false;
-    if(x1 == x2 && y1 == y2)/// si on a séletionner case depart = case arriver on quite
+    if(x1 == x2 && y1 == y2)/// si on a séletionner case depart = case arriver on quitte
         return false;
     if(terrain[x1][y1].isSame(terrain[x2][y2]))///si la case d'arriver est une piéce coep
         return false;
@@ -270,7 +271,7 @@ bool GraphiqueChess::mouve(int x1, int y1, int x2, int y2)
             scoreBlack += terrain[x2][y2].getPoint();
     }
 
-    ///si on arive jusqu'a la cela veut dire qu'on peut faire bouger la piéce
+    ///si on arive jusqu'a la cela veut dire qu'on peut deplacer la piéce
     terrain[x1][y1].deplacer(terrain[x2][y2]);
 
     return true;

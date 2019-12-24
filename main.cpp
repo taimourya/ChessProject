@@ -10,6 +10,7 @@ using chess::GraphiqueChess;
 int main()
 {
     GraphiqueChess chess;
-    chess.draw();
+    chess.play();
+
     return 0;
 }

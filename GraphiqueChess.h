@@ -22,7 +22,7 @@ namespace chess
         public:
             GraphiqueChess();
 
-            void draw();
+            void play();
 
         private:
             void drawPiece(int i, int j, const Color& couleur);
@@ -34,7 +34,9 @@ namespace chess
             bool isBoardClicked(const Event& event, int &x, int &y);
             Text createText(const string& textString, int taille, int posx, int posy, const Color& couleur);
             void createPiece(Sprite& pieceSprite, Texture& PieceTexture, const string& textureFile);
+
         private:
+
             RenderWindow window;
             Font font;
             Button board[N][N];

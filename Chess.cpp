@@ -204,9 +204,9 @@ bool Chess::mouve()
 
 
 
-    if(terrain[x1][y1].isFree())/// si on a sélectioner une case vide on quite
+    if(terrain[x1][y1].isFree())/// si on a sélectioner une case vide on quitte
         return false;
-    if(terrain[x1][y1].couleurOfPiece() != tour) /// si on a sélectioner une piéce de l'ennemi on quite
+    if(terrain[x1][y1].couleurOfPiece() != tour) /// si on a sélectioner une piéce de l'ennemi on quitte
         return false;
     if(x1 == x2 && y1 == y2)/// si on a séletionner case depart = case arriver on quite
         return false;
@@ -267,7 +267,7 @@ bool Chess::mouve()
             scoreBlack += terrain[x2][y2].getPoint();
     }
 
-    ///si on arive jusqu'a la cela veut dire qu'on peut faire bouger la piéce
+    ///si on arive jusqu'a la cela veut dire qu'on peut deplacer la piéce
     terrain[x1][y1].deplacer(terrain[x2][y2]);
 
     return true;
@@ -291,7 +291,7 @@ bool Chess::mouvePion(int x1, int y1, int x2, int y2)
             if(!terrain[x1-1][y1].isFree())///si il y'as un obstacle
                 return false;
         }
-        po= x1 == 6? 2:1; /// la porter du pion qu'on il est sur ca case de depart est 2
+        po = x1 == 6? 2:1; /// la porter du pion qu'on il est sur ca case de depart est 2
         if(x2 < x1-po || x1 < x2) ///on ne peut pas depasser la porter du pion et pas de retour en arriére
             return false;
     }
